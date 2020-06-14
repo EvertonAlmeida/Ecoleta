@@ -51,4 +51,27 @@ export default class PointsController {
     });
   }
 
+  async show (request: Request, response: Response) {
+    const { id } = request.params;
+
+    const point = await knex('points').where('id', id).first();
+
+    if (!point) {
+      return response.status(400).json({ message: 'Point not found.' });
+    }
+
+    const serializedPoint = {
+        ...point,
+        latitude: Number(point.latitude),
+        longitude: Number(point.longitude),
+        image_url: `http://192.168.0.45:3333/uploads/${point.image}`,
+    };
+
+    const items = await knex('items')
+      .join('point_items', 'items.id', '=', 'point_items.item_id')
+      .where('point_items.point_id', id)
+      .select('items.title');
+
+    return response.json({point: serializedPoint, items});
+  }
 }
